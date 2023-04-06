@@ -1,6 +1,10 @@
 from ttkbootstrap.constants import *
 import ttkbootstrap as ttk
 
+from client.API.server_handler.constants import *
+from client.frames.mainWindow import MainWindow
+from client.data.config import theme
+
 
 class RecoveryFrame(ttk.Frame):
     def __init__(self, parent, previous, connection, **kwargs):
@@ -11,7 +15,7 @@ class RecoveryFrame(ttk.Frame):
         self.connection = connection
 
         # form variables
-        self.mail = ttk.StringVar(value='')
+        self.email = ttk.StringVar(value='')
         self.password = ttk.StringVar(value='')
         self.re_password = ttk.StringVar(value='')
         self.code = ttk.StringVar(value='')
@@ -19,7 +23,7 @@ class RecoveryFrame(ttk.Frame):
         # Head
         ttk.Label(self, text='Enter the following details to recover your account').pack(side=TOP, pady=5)
 
-        self.create_form_entry('Email specified during registration', 'mail', self.mail)
+        self.create_form_entry('Email specified during registration', 'mail', self.email)
         self.create_form_entry('The new password you want to set', 'password', self.password)
         self.create_form_entry('Renew new password', 're-password', self.re_password)
         self.create_form_entry('Code sent to your email', 'code', self.code)
@@ -70,10 +74,34 @@ class RecoveryFrame(ttk.Frame):
         cancel_btn.pack(side=RIGHT, pady=15, padx=5)
 
     def on_send_code(self, label, event=None):
-        label.configure(bootstyle=SECONDARY, cursor='arrow')
+        label.configure(bootstyle=SECONDARY, cursor='arrow', state=DISABLED)
+
+        email = self.email.get()
+        if len(email) > 0:
+            self.connection.send_data(type=RECOVERY_CODE, email=email)
 
     def on_send(self):
-        pass
+        email = self.email.get()
+        password = self.password.get()
+        re_password = self.re_password.get()
+        code = self.code.get()
+
+        if password == re_password:
+            self.connection.send_data(
+                type=RECOVERY,
+                email=email,
+                password=password,
+                code=code
+            )
+
+            status = self.connection.listen_server()['status']
+            print(status)
+            if status == CONFIRMED:
+                print('YES')
+                self.parent.destroy()
+                MainWindow(title='Cinema Searcher', themename=theme).mainloop()
+            else:
+                pass
 
     def on_cancel(self):
         self.pack_forget()

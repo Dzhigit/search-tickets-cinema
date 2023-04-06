@@ -1,0 +1,8 @@
+-r test.txt
+
+ttkbootstrap
+psycopg
+psycopg-binary
+environs
+aiofiles
+inotify

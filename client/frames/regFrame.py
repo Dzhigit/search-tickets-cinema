@@ -1,7 +1,9 @@
 from ttkbootstrap.constants import *
 import ttkbootstrap as ttk
 
-# from client.app_api.constants import *
+from client.API.server_handler.constants import *
+from client.frames.mainWindow import MainWindow
+from client.data.config import theme
 
 from threading import Thread
 
@@ -15,31 +17,27 @@ class RegFrame(ttk.Frame):
         self.connection = connection
 
         # form variables
-        self.mail = ttk.StringVar(value='')
+        self.email = ttk.StringVar(value='')
         self.name = ttk.StringVar(value='')
         self.password = ttk.StringVar(value='')
         self.re_password = ttk.StringVar(value='')
-        self.invitation = ttk.StringVar(value='')
         self.code = ttk.StringVar(value='')
 
         # Head
         ttk.Label(self, text='Fill in the following information if you are creating an account').pack(side=TOP, pady=5)
 
         # creating
-        mail_head = 'Enter your future mail'
-        self.create_form_entry(mail_head, 'mail', self.mail)
+        email_head = 'Enter your future mail'
+        self.create_form_entry(email_head, 'mail', self.email)
 
         name_head = 'Enter your future name'
         self.create_form_entry(name_head, 'name', self.name)
 
         password_head = 'Enter your future password'
-        self.create_form_entry(password_head, 'password', self.name)
+        self.create_form_entry(password_head, 'password', self.password)
 
         re_password_head = 'Repeat the password you entered'
         self.create_form_entry(re_password_head, 're-password', self.re_password)
-
-        invitation_head = 'Enter the invitation code received by you or issued by someone else'
-        self.create_form_entry(invitation_head, 'invitation', self.invitation)
 
         code_head = 'Code sent to your email'
         self.create_form_entry(code_head, 'code', self.code)
@@ -68,7 +66,7 @@ class RegFrame(ttk.Frame):
             text='send code to email',
             cursor='hand2'
         )
-        # send_code_label.bind('<Button-1>', lambda _: self.on_send_code(send_code_label))
+        send_code_label.bind('<Button-1>', lambda _: self.on_send_code(send_code_label))
         send_code_label.pack(side=TOP, pady=10)
 
         send_btn = ttk.Button(
@@ -88,16 +86,35 @@ class RegFrame(ttk.Frame):
             command=self.on_cancel
         )
         cancel_btn.pack(side=RIGHT, pady=25, padx=5)
-    #
-    # def on_send_code(self, label, event=None):
-    #     label.configure(bootstyle=SECONDARY, cursor='arrow')
-    #     Thread(
-    #         target=self.connection.send_data,
-    #         kwargs={'type': RECEIVE_REGISTRATION_CODE}
-    #     )
+
+    def on_send_code(self, label, event=None):
+        label.configure(bootstyle=SECONDARY, cursor='arrow', state=DISABLED)
+
+        email = self.email.get()
+        if len(email) > 0:
+            self.connection.send_data(type=REGISTRATION_CODE, email=email)
 
     def on_send(self):
-        pass
+        user_name = self.name.get()
+        email = self.email.get()
+        password = self.password.get()
+        re_password = self.re_password.get()
+        code = self.code.get()
+
+        if password == re_password:
+            self.connection.send_data(
+                type=REGISTRATION,
+                user_name=user_name,
+                email=email,
+                password=password,
+                code=code
+            )
+            status = self.connection.listen_server()['status']
+            if status == CONFIRMED:
+                self.parent.destroy()
+                MainWindow(title='Cinema Searcher', themename=theme).mainloop()
+            else:
+                pass
 
     def on_cancel(self):
         self.pack_forget()

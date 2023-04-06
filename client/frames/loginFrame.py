@@ -3,6 +3,11 @@ import ttkbootstrap as ttk
 
 from client.frames.regFrame import RegFrame
 from client.frames.recoveryFrame import RecoveryFrame
+from client.API.server_handler.constants import *
+from client.frames.mainWindow import MainWindow
+from client.data.config import theme
+
+from threading import Thread
 
 
 class LoginFrame(ttk.Frame):
@@ -76,7 +81,16 @@ class LoginFrame(ttk.Frame):
         RecoveryFrame(self.parent, self, self.connection).pack()
 
     def on_login(self):
-        pass
+        user_name = self.login.get()
+        password = self.password.get()
+
+        self.connection.send_data(type=LOGIN, user_name=user_name, password=password)
+        status = self.connection.listen_server()['status']
+        if status == CONFIRMED:
+            self.parent.destroy()
+            MainWindow(title='Cinema Searcher', themename=theme).mainloop()
+        else:
+            pass
 
     def on_reg(self):
         self.pack_forget()
