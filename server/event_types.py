@@ -8,3 +8,4 @@ class Events:
 
     CONFIRMED = 'confirmed'
     NOT_CONFIRMED = 'not_confirmed'
+    FILM_NAMES = 'film_names'

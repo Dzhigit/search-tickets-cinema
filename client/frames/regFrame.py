@@ -2,7 +2,7 @@ from ttkbootstrap.constants import *
 import ttkbootstrap as ttk
 
 from client.API.server_handler.constants import *
-from client.frames.mainWindow import MainWindow
+from client.frames.mainFrame import MainFrame
 from client.data.config import theme
 
 from threading import Thread
@@ -34,17 +34,17 @@ class RegFrame(ttk.Frame):
         self.create_form_entry(name_head, 'name', self.name)
 
         password_head = 'Enter your future password'
-        self.create_form_entry(password_head, 'password', self.password)
+        self.create_form_entry(password_head, 'password', self.password, '*')
 
         re_password_head = 'Repeat the password you entered'
-        self.create_form_entry(re_password_head, 're-password', self.re_password)
+        self.create_form_entry(re_password_head, 're-password', self.re_password, '*')
 
         code_head = 'Code sent to your email'
         self.create_form_entry(code_head, 'code', self.code)
 
         self.create_button_box()
 
-    def create_form_entry(self, head, label, variable):
+    def create_form_entry(self, head, label, variable, mask=None):
         container = ttk.Frame(self)
         container.pack(fill=X, pady=5)
 
@@ -53,7 +53,7 @@ class RegFrame(ttk.Frame):
         lbl = ttk.Label(container, width=15, text=label.title())
         lbl.pack(side=LEFT, padx=5)
 
-        ent = ttk.Entry(container, width=45, textvariable=variable)
+        ent = ttk.Entry(container, width=45, textvariable=variable, show=mask)
         ent.pack(side=LEFT, fill=X, padx=5)
 
     def create_button_box(self):
@@ -111,8 +111,8 @@ class RegFrame(ttk.Frame):
             )
             status = self.connection.listen_server()['status']
             if status == CONFIRMED:
-                self.parent.destroy()
-                MainWindow(title='Cinema Searcher', themename=theme).mainloop()
+                self.pack_forget()
+                MainFrame(self.parent, connection=self.connection).pack()
             else:
                 pass
 

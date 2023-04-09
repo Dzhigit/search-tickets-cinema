@@ -4,7 +4,7 @@ import ttkbootstrap as ttk
 from client.frames.regFrame import RegFrame
 from client.frames.recoveryFrame import RecoveryFrame
 from client.API.server_handler.constants import *
-from client.frames.mainWindow import MainWindow
+from client.frames.mainFrame import MainFrame
 from client.data.config import theme
 
 from threading import Thread
@@ -20,32 +20,25 @@ class LoginFrame(ttk.Frame):
         # form variables
         self.login = ttk.StringVar(value='')
         self.password = ttk.StringVar(value='')
-        self.auto_auth = ttk.IntVar()
 
         self.create_form_entry('login:', self.login)
-        self.create_form_entry('password:', self.password)
+        self.create_form_entry('password:', self.password, '*')
 
         self.create_button_box()
 
-    def create_form_entry(self, label, variable):
+    def create_form_entry(self, label, variable, mask=None):
         container = ttk.Frame(self)
         container.pack(fill=X, pady=5)
 
         lbl = ttk.Label(container, width=10, text=label.title())
         lbl.pack(side=LEFT, padx=5)
 
-        ent = ttk.Entry(container, width=50, textvariable=variable)
+        ent = ttk.Entry(container, width=50, textvariable=variable, show=mask)
         ent.pack(side=LEFT, fill=X, padx=5)
 
     def create_button_box(self):
         container = ttk.Frame(self)
         container.pack(fill=X)
-
-        auto_auth_btn = ttk.Checkbutton(
-            container,
-            text='auto authorization',
-            variable=self.auto_auth)
-        auto_auth_btn.pack(side=TOP)
 
         forgot_label = ttk.Label(
             container,
@@ -87,8 +80,8 @@ class LoginFrame(ttk.Frame):
         self.connection.send_data(type=LOGIN, user_name=user_name, password=password)
         status = self.connection.listen_server()['status']
         if status == CONFIRMED:
-            self.parent.destroy()
-            MainWindow(title='Cinema Searcher', themename=theme).mainloop()
+            self.pack_forget()
+            MainFrame(self.parent, connection=self.connection).pack()
         else:
             pass
 

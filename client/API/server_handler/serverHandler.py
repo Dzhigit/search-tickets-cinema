@@ -1,6 +1,3 @@
-from client.API.server_handler.constants import *
-from client.API.server_handler.structures import get_response_structure
-
 import logging
 
 import socket
@@ -26,20 +23,18 @@ class BasicDispatchClient(socket.socket):
     def listen_server(self):
         while True:
             self.logger.debug('Waiting for the data to be received from the server')
-            data = self.recv(1024)
+            data = pickle.loads(self.recv(102400))
             if not data:
                 self.logger.debug('Data on server has not information')
                 continue
             else:
-                self.logger.debug('Data received {}'.format(pickle.loads(data)))
-                return pickle.loads(data)
+                self.logger.debug('Data received {}'.format(data))
+                return data
 
     def send_data(self, **kwargs):
-        response_structure = get_response_structure(**kwargs)
-        if len(response_structure) > 0:
-            self.logger.debug('Sending data to server')
-            self.sendall(pickle.dumps(response_structure))
-            self.logger.debug('Data sent successfully')
+        self.logger.debug('Sending data to server')
+        self.sendall(pickle.dumps(kwargs))
+        self.logger.debug('Data sent successfully')
 
 
 # For debugging

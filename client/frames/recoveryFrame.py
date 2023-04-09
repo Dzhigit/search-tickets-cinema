@@ -2,7 +2,7 @@ from ttkbootstrap.constants import *
 import ttkbootstrap as ttk
 
 from client.API.server_handler.constants import *
-from client.frames.mainWindow import MainWindow
+from client.frames.mainFrame import MainFrame
 from client.data.config import theme
 
 
@@ -98,8 +98,8 @@ class RecoveryFrame(ttk.Frame):
             print(status)
             if status == CONFIRMED:
                 print('YES')
-                self.parent.destroy()
-                MainWindow(title='Cinema Searcher', themename=theme).mainloop()
+                self.pack_forget()
+                MainFrame(self.parent, connection=self.connection).pack()
             else:
                 pass
 

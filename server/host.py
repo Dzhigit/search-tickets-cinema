@@ -11,7 +11,8 @@ from email.mime.text import MIMEText
 from data.config import host, port, smtp_login, smtp_password
 from event_types import Events
 
-from db_handler import BaseDBHandler
+from server.handlers.db_handler import BaseDBHandler
+from server.handlers.kp_handler import KPHandler
 
 
 class RequestHandler(socket.socket):
@@ -22,6 +23,7 @@ class RequestHandler(socket.socket):
         self.users_code = {}
         self.server_smtp = smtplib.SMTP_SSL('smtp.yandex.ru', 465)
         self.db = BaseDBHandler()
+        self.kp = KPHandler(token="7eeb7234-81b8-4b46-997c-a611f8599e17")
 
         self.event_loop = asyncio.new_event_loop()
         self.exception = self.event_loop.set_exception_handler(handler=None)
@@ -69,6 +71,8 @@ class RequestHandler(socket.socket):
                                         await self.send_data(conn, status=Events.CONFIRMED)
                                     else:
                                         await self.send_data(conn, status=Events.NOT_CONFIRMED)
+                        else:
+                            await self.send_data(conn, status=Events.NOT_CONFIRMED)
 
                     elif obj['type'] == Events.REGISTRATION:
                         db_data = self.db.search_data()
@@ -77,30 +81,29 @@ class RequestHandler(socket.socket):
                             for user in users:
                                 if user == obj['user_name']:
                                     await self.send_data(conn, status=Events.NOT_CONFIRMED)
+                                    break
                                 else:
                                     if obj['code'] == self.users_code[conn]:
                                         del self.users_code[conn]
                                         self.db.insert_data(obj['user_name'], obj['email'], obj['password'])
                                         print(self.db.search_data())
                                         await self.send_data(conn, status=Events.CONFIRMED)
-                                    else:
-                                        await self.send_data(conn, status=Events.NOT_CONFIRMED)
+                                        break
+                        else:
+                            await self.send_data(conn, status=Events.NOT_CONFIRMED)
 
                     elif obj['type'] == Events.RECOVERY:
                         db_data = self.db.search_data()
 
                         for users in db_data:
                             for user in users:
-                                if user != obj['email']:
-                                    await self.send_data(conn, status=Events.NOT_CONFIRMED)
-                                else:
-                                    if obj['code'] == self.users_code[conn]:
-                                        del self.users_code[conn]
-                                        self.db.update_data(obj['password'], obj['email'])
-                                        print('confirmed')
-                                        await self.send_data(conn, status=Events.CONFIRMED)
-                                    else:
-                                        await self.send_data(conn, status=Events.NOT_CONFIRMED)
+                                if user == obj['email']:
+                                    del self.users_code[conn]
+                                    self.db.update_data(obj['password'], obj['email'])
+                                    await self.send_data(conn, status=Events.CONFIRMED)
+                                    break
+                        else:
+                            await self.send_data(conn, status=Events.NOT_CONFIRMED)
 
                     elif obj['type'] == Events.REGISTRATION_CODE:
                         code = ''.join([str(randint(0, 9)) for i in range(6)])
@@ -111,6 +114,11 @@ class RequestHandler(socket.socket):
                         code = ''.join([str(randint(0, 9)) for i in range(6)])
                         self.users_code[conn] = code
                         self.send_email(obj['email'], 'Your recovery code in STC', 'Your code - ' + code)
+
+                    elif obj['type'] == Events.FILM_NAMES:
+                        films = self.kp.search(obj['film_name'])
+                        films_info = self.kp.get_films_info(films)
+                        await self.send_data(conn, films=films_info)
 
     async def send_data(self, conn, **kwargs):
         if not kwargs:
