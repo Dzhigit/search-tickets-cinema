@@ -46,7 +46,9 @@ class MainFrame(ttk.Frame):
             film_name=self.search.get()
         )
         title = []
+        print(self.search.get())
         self.films = self.connection.listen_server()['films']
+        print(self.films)
         for film in self.films:
             title.append(film)
         self.combo_box.config(values=title)

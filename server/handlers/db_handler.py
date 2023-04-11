@@ -1,5 +1,5 @@
 import psycopg2
-from data.config import db_config
+from client.data.config import db_config
 
 
 class BaseDBHandler:

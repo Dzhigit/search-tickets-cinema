@@ -61,6 +61,7 @@ class RequestHandler(socket.socket):
                 if not data:
                     continue
                 else:
+                    print(obj)
                     if obj['type'] == Events.LOGIN:
                         db_data = self.db.search_data()
 
@@ -71,26 +72,22 @@ class RequestHandler(socket.socket):
                                         await self.send_data(conn, status=Events.CONFIRMED)
                                     else:
                                         await self.send_data(conn, status=Events.NOT_CONFIRMED)
-                        else:
-                            await self.send_data(conn, status=Events.NOT_CONFIRMED)
 
                     elif obj['type'] == Events.REGISTRATION:
                         db_data = self.db.search_data()
 
-                        for users in db_data:
-                            for user in users:
-                                if user == obj['user_name']:
-                                    await self.send_data(conn, status=Events.NOT_CONFIRMED)
-                                    break
-                                else:
-                                    if obj['code'] == self.users_code[conn]:
-                                        del self.users_code[conn]
-                                        self.db.insert_data(obj['user_name'], obj['email'], obj['password'])
-                                        print(self.db.search_data())
-                                        await self.send_data(conn, status=Events.CONFIRMED)
-                                        break
+                        if len(db_data) > 0:
+                            for users in db_data:
+                                for user in users:
+                                    if user == obj['user_name']:
+                                        pass
+
                         else:
-                            await self.send_data(conn, status=Events.NOT_CONFIRMED)
+                            if obj['code'] == self.users_code[conn]:
+                                del self.users_code[conn]
+                                self.db.insert_data(obj['user_name'], obj['email'], obj['password'])
+                                print(self.db.search_data())
+                                await self.send_data(conn, status=Events.CONFIRMED)
 
                     elif obj['type'] == Events.RECOVERY:
                         db_data = self.db.search_data()
@@ -101,9 +98,6 @@ class RequestHandler(socket.socket):
                                     del self.users_code[conn]
                                     self.db.update_data(obj['password'], obj['email'])
                                     await self.send_data(conn, status=Events.CONFIRMED)
-                                    break
-                        else:
-                            await self.send_data(conn, status=Events.NOT_CONFIRMED)
 
                     elif obj['type'] == Events.REGISTRATION_CODE:
                         code = ''.join([str(randint(0, 9)) for i in range(6)])
